@@ -40,7 +40,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "~/components/ui/dialog"
-import FileItem from "./entities/file-item"
+import { type FileItem } from "~/lib/mock-data"
 
 export default function gridViewMode(
     currentFolderContents: FileItem[],

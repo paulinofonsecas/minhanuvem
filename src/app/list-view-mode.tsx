@@ -1,26 +1,16 @@
 "use client"
 
-import { useState, useRef } from "react"
 import {
     FileText,
     Folder,
-    Home,
     ImageIcon,
-    Info,
-    LayoutGrid,
-    List,
     MoreVertical,
-    Search,
     Share2,
     Star,
     Trash2,
-    X,
-    Upload,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import { Button } from "~/components/ui/button"
-import { Card } from "~/components/ui/card"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,19 +18,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
-import { Input } from "~/components/ui/input"
-import { ScrollArea } from "~/components/ui/scroll-area"
 import { Separator } from "~/components/ui/separator"
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "~/components/ui/dialog"
-import FileItem from "./entities/file-item"
+import { type FileItem } from "~/lib/mock-data"
 
 export default function listViewMode(
     currentFolderContents: FileItem[],
