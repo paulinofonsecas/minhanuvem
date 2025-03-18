@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "singlestore",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "1",
+      "when": 1742290312465,
+      "tag": "0000_motionless_bedlam",
+      "breakpoints": true
+    }
+  ]
+}

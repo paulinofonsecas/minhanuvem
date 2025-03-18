@@ -40,22 +40,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import FileItem from "./entities/file-item"
+import listViewMode from "./list-view-mode"
+import gridViewMode from "./grid-view-mode"
 
 // Mock data structure
-interface FileItem {
-  id: string
-  name: string
-  type: "file" | "folder" | "image" | "document"
-  size?: string
-  modified: string
-  path: string
-  parentId: string | null
-}
+
 
 const mockFiles: FileItem[] = [
   {
     id: "root",
-    name: "My Drive",
+    name: "Inicio",
     type: "folder",
     modified: "2023-03-15",
     path: "/",
@@ -170,15 +165,28 @@ const mockFiles: FileItem[] = [
 
 export default function DriveClone() {
   const [currentFolder, setCurrentFolder] = useState<string>("root")
-  const [breadcrumbs, setBreadcrumbs] = useState<{ id: string; name: string }[]>([{ id: "root", name: "My Drive" }])
+  const [breadcrumbs, setBreadcrumbs] = useState<{ id: string; name: string }[]>([{ id: "root", name: "Inicio" }])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [filterText, setFilterText] = useState<string>("") 
+  const [activeTab, setActiveTab] = useState<"all" | "folders" | "files">("all")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Get current folder contents
-  const currentFolderContents = mockFiles.filter((file) => file.parentId === currentFolder)
+  // Get current folder contents with filter
+  const currentFolderContents = mockFiles
+    .filter((file) => file.parentId === currentFolder)
+    .filter((file) => 
+      filterText === "" || 
+      file.name.toLowerCase().includes(filterText.toLowerCase())
+    )
+    .filter((file) => {
+      if (activeTab === "all") return true;
+      if (activeTab === "folders") return file.type === "folder";
+      if (activeTab === "files") return file.type !== "folder";
+      return true;
+    })
 
   // Get current folder info
   const currentFolderInfo = mockFiles.find((file) => file.id === currentFolder)
@@ -225,7 +233,7 @@ export default function DriveClone() {
   const handleFilesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // TODO: Implement file handling logic here
   }
-  
+
 
   return (
     <div className="flex h-screen flex-col">
@@ -234,16 +242,32 @@ export default function DriveClone() {
         <div className="flex h-16 items-center px-4">
           <div className="flex items-center gap-2 font-semibold">
             <Folder className="h-6 w-6 text-blue-500" />
-            <span>Drive Clone</span>
+            <span>Minha Nuvem</span>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search in Drive" className="w-[300px] pl-8" />
+              <Input
+                type="search"
+                placeholder="Filtrar arquivos e pastas..."
+                className="w-[300px] pl-8"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+              />
+              {filterText && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 h-6 w-6"
+                  onClick={() => setFilterText("")}
+                >
+                  <X size={12} />
+                </Button>
+              )}
             </div>
             <Avatar>
               <AvatarImage src="/placeholder.svg" alt="User" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarFallback>PF</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -255,35 +279,35 @@ export default function DriveClone() {
           <div className="flex flex-col gap-2 p-4">
             <Button className="justify-start gap-2" onClick={() => setUploadDialogOpen(true)}>
               <Upload className="h-4 w-4" />
-              <span>Upload</span>
+              <span>Carregar</span>
             </Button>
           </div>
           <nav className="grid gap-1 px-2">
             <Button
               variant="ghost"
               className="justify-start gap-2"
-              onClick={() => navigateToFolder("root", "My Drive")}
+              onClick={() => navigateToFolder("root", "Inicio")}
             >
               <Home className="h-4 w-4" />
-              <span>My Drive</span>
+              <span>Inicio</span>
             </Button>
             <Button variant="ghost" className="justify-start gap-2">
               <Share2 className="h-4 w-4" />
-              <span>Shared with me</span>
+              <span>Compartilhado comigo</span>
             </Button>
             <Button variant="ghost" className="justify-start gap-2">
               <Star className="h-4 w-4" />
-              <span>Starred</span>
+              <span>Favorito</span>
             </Button>
             <Button variant="ghost" className="justify-start gap-2">
               <Trash2 className="h-4 w-4" />
-              <span>Trash</span>
+              <span>Lixo</span>
             </Button>
             <Separator className="my-2" />
-            <div className="px-3 py-2 text-xs font-medium text-muted-foreground">Storage</div>
+            <div className="px-3 py-2 text-xs font-medium text-muted-foreground">Armazenamento</div>
             <div className="px-3 py-2">
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">7.5 GB of 15 GB used</span>
+                <span className="text-muted-foreground">7.5 GB de 15 GB usado</span>
                 <span className="text-muted-foreground">50%</span>
               </div>
               <div className="h-2 rounded-full bg-muted">
@@ -340,123 +364,20 @@ export default function DriveClone() {
             {/* File browser */}
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <Tabs defaultValue="all" className="mb-4">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "all" | "folders" | "files")} className="mb-4">
                   <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="folders">Folders</TabsTrigger>
-                    <TabsTrigger value="files">Files</TabsTrigger>
+                    <TabsTrigger value="all">Tudo</TabsTrigger>
+                    <TabsTrigger value="folders">Pastas</TabsTrigger>
+                    <TabsTrigger value="files">Arquivos</TabsTrigger>
                   </TabsList>
                 </Tabs>
 
-                {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                    {currentFolderContents.map((item) => (
-                      <Card key={item.id} className="overflow-hidden">
-                        <div
-                          className="aspect-square p-2 flex items-center justify-center bg-muted/50"
-                          onClick={() =>
-                            item.type === "folder"
-                              ? navigateToFolder(item.id, item.name)
-                              : window.open(item.path, "_blank")
-                          }
-                          style={{ cursor: "pointer" }}
-                        >
-                          {item.type === "folder" && <Folder className="h-16 w-16 text-blue-500" />}
-                          {item.type === "file" && <FileText className="h-16 w-16 text-gray-500" />}
-                          {item.type === "document" && <FileText className="h-16 w-16 text-blue-500" />}
-                          {item.type === "image" && <ImageIcon className="h-16 w-16 text-green-500" />}
-                        </div>
-                        <div className="p-2">
-                          <div className="flex items-center justify-between">
-                            <div className="truncate font-medium">{item.name}</div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Share2 className="mr-2 h-4 w-4" />
-                                  <span>Share</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Star className="mr-2 h-4 w-4" />
-                                  <span>Star</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Delete</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.modified} {item.size && `• ${item.size}`}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-lg border">
-                    <div className="grid grid-cols-12 gap-2 p-3 text-sm font-medium text-muted-foreground">
-                      <div className="col-span-6">Name</div>
-                      <div className="col-span-2">Size</div>
-                      <div className="col-span-3">Modified</div>
-                      <div className="col-span-1"></div>
-                    </div>
-                    <Separator />
-                    {currentFolderContents.map((item) => (
-                      <div key={item.id}>
-                        <div
-                          className="grid grid-cols-12 items-center gap-2 p-3 hover:bg-muted/50"
-                          onClick={() =>
-                            item.type === "folder"
-                              ? navigateToFolder(item.id, item.name)
-                              : window.open(item.path, "_blank")
-                          }
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="col-span-6 flex items-center gap-2">
-                            {item.type === "folder" && <Folder className="h-5 w-5 text-blue-500" />}
-                            {item.type === "file" && <FileText className="h-5 w-5 text-gray-500" />}
-                            {item.type === "document" && <FileText className="h-5 w-5 text-blue-500" />}
-                            {item.type === "image" && <ImageIcon className="h-5 w-5 text-green-500" />}
-                            <span className="truncate">{item.name}</span>
-                          </div>
-                          <div className="col-span-2 text-sm text-muted-foreground">{"--"}</div>
-                          <div className="col-span-3 text-sm text-muted-foreground">{item.modified}</div>
-                          <div className="col-span-1 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Share2 className="mr-2 h-4 w-4" />
-                                  <span>Share</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Star className="mr-2 h-4 w-4" />
-                                  <span>Star</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Delete</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                        <Separator />
-                      </div>
-                    ))}
-                  </div>
+                {viewMode === "grid" ? gridViewMode(
+                  currentFolderContents,
+                  navigateToFolder,
+                ) : listViewMode(
+                  currentFolderContents,
+                  navigateToFolder,
                 )}
               </div>
             </ScrollArea>
@@ -469,7 +390,7 @@ export default function DriveClone() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Upload files</DialogTitle>
-            <DialogDescription>Upload files to {"My Drive"}</DialogDescription>
+            <DialogDescription>Upload files to {"Inicio"}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {!isUploading ? (
@@ -491,7 +412,7 @@ export default function DriveClone() {
                 </div>
               </div>
             ) : (
-              
+
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
